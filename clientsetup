@@ -69,7 +69,9 @@ zypper ar -f http://download.opensuse.org/repositories/spins:/invis:/common/open
 zypper --gpg-auto-import-keys ref
 
 # Software installieren
+zypper -n rm -n nscd
 zypper -n in -n sssd sssd-ad sssd-tools cyrus-sasl-gssapi
+zypper -n in -n --force-resolution --from spins_invis_common krb5-client
 
 # Dateien sichern und kopieren
 mv /etc/samba/smb.conf /etc/samba/smb.conf.setupsafe
@@ -77,12 +79,13 @@ if [[ -f /etc/sssd/sssd.conf ]]; then
     mv /etc/sssd/sssd.conf /etc/sssd/sssd.conf.setupsafe
 fi
 mv /etc/krb5.conf /etc/krb5.conf.setupsafe 
+mv /etc/nsswitch.conf /etc/nsswitch.conf.setupsafe 
 
 # Neue Konfigurationsdateien kopieren und anpassen
 cp $PWD/files/krb5.conf /etc
 cp $PWD/files/sssd.conf /etc/sssd
 cp $PWD/files/smb.conf /etc/samba
-cp $PWD/files/common* /etc/pam.d
+cp $PWD/files/nsswitch.conf /etc
 
 # Samba
 path="/etc/samba"
@@ -127,8 +130,11 @@ $PWD/delssscache
 # SSSD in Autostart integrieren.
 systemctl enable sssd.service
 
+# PAM Konfigurieren -> SSSD Modul aktivieren
+pam-config --add --sss
+
 ## Jetzt noch die NFS Freigaben einhaengen
-pdc=`dig SRV _ldap._tcp.orr-net.loc +short |cut -d " " -f4`
+pdc=`dig SRV _ldap._tcp.$dnsdomain +short |cut -d " " -f4`
 pdc=`echo "${pdc%?}"`
 
 # Mount Verzeichnis anlegen
