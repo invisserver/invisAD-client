@@ -125,7 +125,8 @@ kinit Administrator@$krbrealm
 net join -k
 
 # Eventuell vorhandenen SSS Cache vollstaendig loeschen und sssd starten
-$PWD/delssscache
+cp $PWD/delssscache /usr/bin
+delssscache
 
 # SSSD in Autostart integrieren.
 systemctl enable sssd.service
