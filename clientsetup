@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script zur Integration eines openSUSE Clients in eine invis-Server Active-
 # Directory Domaene
-# (c) 2015 Stefan Schaefer -- invis-server.org
+# (c) 2015-2017 Stefan Schaefer -- invis-server.org
 # License GPLv3
 # Questions: info@invis-server.org
 
@@ -65,13 +65,19 @@ fi
 
 # spins:invis:common Repository hinzufuegen
 suseversion=`cat /etc/SuSE-release | grep VERSION | tr -d " " | cut -d "=" -f2`
-zypper ar -f http://download.opensuse.org/repositories/spins:/invis:/common/openSUSE_$suseversion/spins:invis:common.repo
-zypper --gpg-auto-import-keys ref
+sv=`echo $suseversion | tr -d "."`
 
-# Software installieren
+# NSCD entfernen, da Konflikt mit sssd
 zypper -n rm -n nscd
-zypper -n in -n sssd sssd-ad sssd-tools cyrus-sasl-gssapi
-zypper -n in -n --force-resolution --from spins_invis_common krb5-client
+# Software installieren
+if (( $sv < 422 )); then
+    zypper ar -f http://download.opensuse.org/repositories/spins:/invis:/common/openSUSE_$suseversion/spins:invis:common.repo
+    zypper --gpg-auto-import-keys ref
+    zypper -n in -n sssd sssd-ad sssd-tools cyrus-sasl-gssapi
+    zypper -n in -n --force-resolution --from spins_invis_common krb5-client
+else
+    zypper -n in -n sssd sssd-ad sssd-tools cyrus-sasl-gssapi krb5-client
+fi
 
 # Dateien sichern und kopieren
 mv /etc/samba/smb.conf /etc/samba/smb.conf.setupsafe
@@ -114,11 +120,13 @@ changevalues $path $modfile "$changestrings"
 chown root.root "$path/$modfile"
 chmod 0600 "$path/$modfile"
 
-
 # Domaenenbeitritt durchfueren
 # Bugfix, das folgende Verzeichnis fehlt
-mkdir -p "/run/user/0/krb5cc"
+if [[ ! -d "/run/user/0/krb5cc" ]]; then
+    mkdir -p "/run/user/0/krb5cc"
+fi
 
+# Domaenenbeitritt
 echo -e "Sie benötigen jetzt das Passwort des Domänenadministrators.\n"
 
 kinit Administrator@$krbrealm
