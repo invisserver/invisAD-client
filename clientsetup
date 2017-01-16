@@ -133,7 +133,7 @@ kinit Administrator@$krbrealm
 net join -k
 
 # Eventuell vorhandenen SSS Cache vollstaendig loeschen und sssd starten
-cp $PWD/delssscache /usr/bin
+cp $PWD/scripts/delssscache /usr/bin
 delssscache
 
 # SSSD in Autostart integrieren.
@@ -145,6 +145,9 @@ pam-config --add --sss
 ## Jetzt noch die NFS Freigaben einhaengen
 pdc=`dig SRV _ldap._tcp.$dnsdomain +short |cut -d " " -f4`
 pdc=`echo "${pdc%?}"`
+
+# Script für VPN Verbindungen installieren
+cp $PWD/scripts/invisconnect /usr/bin
 
 # Mount Verzeichnis anlegen
 mkdir /mnt/invis
