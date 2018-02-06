@@ -23,12 +23,12 @@
 # Sie sollten ein Exemplar der GNU General Public License zusammen mit diesem 
 # Programm erhalten haben. Falls nicht, siehe <http://www.gnu.org/licenses/>. 
 
-# Funktionen
-# Werte aus Konfigurationsdatendatei extrahieren
-getconfdata() {
-    cat $setupdir/invis_confdata |grep "$1:" | cut -d ":" -f $2
-}
+# Konfigurationsdaten
+confdir="/etc/invis-client"
+conffile="$confdir/invis-client.conf"
+passfile="$confdir/invis-pws.conf"
 
+# Funktionen
 # Konfigurationsparameter tauschen
 changevalues() {
     # Arg1 = Pfad, Arg2 = Datei, Arg3 = sed String
@@ -132,8 +132,7 @@ echo -e "Sie benötigen jetzt das Passwort des Domänenadministrators.\n"
 kinit Administrator@$krbrealm
 net join -k
 
-# Eventuell vorhandenen SSS Cache vollstaendig loeschen und sssd starten
-cp $PWD/scripts/delssscache /usr/bin
+# remove old sss-cache
 delssscache
 
 # SSSD in Autostart integrieren.
