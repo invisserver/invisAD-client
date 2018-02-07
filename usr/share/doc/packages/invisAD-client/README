@@ -1,0 +1,21 @@
+invisAD-client - Automatic openSUSE Client Integration
+
+The scripts in this package helps you to integrate an openSUSE based computer
+to an ActiveDirectory on an invis-Server.
+
+The scripts:
+
+1. clientsetup - Joins the AD Domain and mounts the invis-servers fileserver 
+   shares via NFS on the client computer. This script is needet only one time.
+   
+2. delssscache - Removes an existing sssd-cache completely. This script is 
+   needed in case if user mapping and enumerating didn't work properly.
+
+3. invisconnect - This script connects an client computer via OpenVPN to an
+   invis-Server.
+   
+This scripts of this package only works on openSUSE based systems.
+
+Have a lot of fun....
+
+Stefan - invis-server.org
