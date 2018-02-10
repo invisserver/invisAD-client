@@ -28,6 +28,8 @@ confdir="/etc/invis-client"
 conffile="$confdir/invis-client.conf"
 passfile="$confdir/invis-pws.conf"
 
+exampledir="/usr/share/doc/packages/invisAD-client/examples"
+
 # Funktionen
 # Konfigurationsparameter tauschen
 changevalues() {
@@ -67,31 +69,19 @@ fi
 suseversion=`cat /etc/SuSE-release | grep VERSION | tr -d " " | cut -d "=" -f2`
 sv=`echo $suseversion | tr -d "."`
 
-# NSCD entfernen, da Konflikt mit sssd
-zypper -n rm -n nscd
-# Software installieren
-if (( $sv < 422 )); then
-    zypper ar -f http://download.opensuse.org/repositories/spins:/invis:/common/openSUSE_$suseversion/spins:invis:common.repo
-    zypper --gpg-auto-import-keys ref
-    zypper -n in -n sssd sssd-ad sssd-tools cyrus-sasl-gssapi
-    zypper -n in -n --force-resolution --from spins_invis_common krb5-client
-else
-    zypper -n in -n sssd sssd-ad sssd-tools cyrus-sasl-gssapi krb5-client
-fi
-
 # Dateien sichern und kopieren
 mv /etc/samba/smb.conf /etc/samba/smb.conf.setupsafe
 if [[ -f /etc/sssd/sssd.conf ]]; then
-    mv /etc/sssd/sssd.conf /etc/sssd/sssd.conf.setupsafe
+    old /etc/sssd/sssd.conf
 fi
-mv /etc/krb5.conf /etc/krb5.conf.setupsafe 
-mv /etc/nsswitch.conf /etc/nsswitch.conf.setupsafe 
+old /etc/krb5.conf
+old /etc/nsswitch.conf
 
 # Neue Konfigurationsdateien kopieren und anpassen
-cp $PWD/files/krb5.conf /etc
-cp $PWD/files/sssd.conf /etc/sssd
-cp $PWD/files/smb.conf /etc/samba
-cp $PWD/files/nsswitch.conf /etc
+cp $exampledir/etc/krb5.conf /etc
+cp $exampledir/etc/nsswitch.conf /etc
+cp $exampledir/sssd/sssd.conf /etc/sssd
+cp $exampledir/samba/smb.conf /etc/samba
 
 # Samba
 path="/etc/samba"
@@ -145,14 +135,20 @@ pam-config --add --sss
 pdc=`dig SRV _ldap._tcp.$dnsdomain +short |cut -d " " -f4`
 pdc=`echo "${pdc%?}"`
 
-# Script für VPN Verbindungen installieren
-cp $PWD/scripts/invisconnect /usr/bin
+# memberserver or desktop-client?
+membertype="nix"
+until [[ $membertype == "pc" || $membertype == "ms" ]]; do
+    read -p "Ist dies ein Memberserver oder ein Arbeitsplatz-Computer? [ms|pc]: " membertype
+    membertype=`tolower $membertype`
+done
 
-# Mount Verzeichnis anlegen
-mkdir /mnt/invis
+if [[ $membertype == "pc" ]]; then
+    # Mount Verzeichnis anlegen
+    mkdir /mnt/invis
 
-echo "$pdc:/home /home nfs4 defaults 0 0" >> /etc/fstab
-echo "$pdc:/shares /mnt/invis/shares nfs4 defaults 0 0" >> /etc/fstab
+    echo "$pdc:/home /home nfs4 defaults 0 0" >> /etc/fstab
+    echo "$pdc:/shares /mnt/invis/shares nfs4 defaults 0 0" >> /etc/fstab
 
-# Alles mounten, was nicht gemountet ist.
-mount -a
+    # Alles mounten, was nicht gemountet ist.
+    mount -a
+fi
