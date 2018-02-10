@@ -25,7 +25,7 @@
 
 # Konfigurationsdaten
 confdir="/etc/invis-client"
-conffile="$confdir/invis-client.conf"
+conffile="invis-client.conf"
 passfile="$confdir/invis-pws.conf"
 
 exampledir="/usr/share/doc/packages/invisAD-client/examples"
@@ -33,7 +33,7 @@ exampledir="/usr/share/doc/packages/invisAD-client/examples"
 # Funktionen
 # Konfigurationsparameter tauschen
 changevalues() {
-    # Arg1 = Pfad, Arg2 = Datei, Arg3 = sed String
+    # Arg1 = Pfad, Arg2 = Konfigurationsdatei, Arg2 = sed String
     cat $1/$2|sed "s%$3%g" > $1/$2.new
     mv $1/$2.new $1/$2
 }
@@ -49,8 +49,13 @@ toupper() {
 }
 
 # Domaene abfragen
-echo -e "Achtung: Dieses Script ist ausschließlich für openSUSE Clients gedacht!\n"
-sleep 3
+clear
+echo -e "\n\n======================================================================================================"
+echo -e "Sie sollten diesem Computer einen aussagekräftigen und Hostnamen gegeben haben bevor Sie fortfahren.\n"
+echo -e "Sollte dies nicht der Fall sein, brechen Sie das Script mit Strg+C ab."
+echo -e "======================================================================================================"
+sleep 5
+
 read -p "Geben Sie bitte den Namen Ihrer Domäne in DNS Schreibweise ein (Bsp.: example.loc): " reqdnsdomain
 
 # Unterschiedliche Schreibweisen generieren
@@ -59,6 +64,18 @@ dotcount=`echo -n "$reqdnsdomain" | sed -e 's/[^.]//g' | wc -m`
 dnsdomain=`tolower $reqdnsdomain`
 krbrealm=`toupper $dnsdomain`
 
+# get invis-Server hostname
+invisserver=`dig SRV _ldap._tcp.$dnsdomain +short |cut -d " " -f4`
+invisip=`dig $invisserver +short`
+
+# modify config file
+changestrings="invis-net.loc%$dnsdomain"
+changevalues $confdir $conffile $changestrings
+
+changestrings="192.168.220.10%$invisip"
+changevalues $confdir $conffile $changestrings
+
+# create NetBIOS-Domain and kerberos realm
 if (( $dotcount == 1 )); then
     netbiosdomain=`echo $krbrealm | cut -d "." -f1`
 else
@@ -100,7 +117,7 @@ modfile="krb5.conf"
 changestrings="INVIS-NET.LOC%$krbrealm"
 changevalues $path $modfile "$changestrings"
 
-# sssd
+# prepare sssd
 path="/etc/sssd/"
 modfile="sssd.conf"
 
@@ -110,16 +127,24 @@ changevalues $path $modfile "$changestrings"
 chown root.root "$path/$modfile"
 chmod 0600 "$path/$modfile"
 
-# Domaenenbeitritt durchfueren
+# prepare domain join
 # Bugfix, das folgende Verzeichnis fehlt
 if [[ ! -d "/run/user/0/krb5cc" ]]; then
     mkdir -p "/run/user/0/krb5cc"
 fi
 
-# Domaenenbeitritt
+# inform about next steps question
 echo -e "Sie benötigen jetzt das Passwort des Domänenadministrators.\n"
 
+# test kerberos and andmin password
 kinit Administrator@$krbrealm
+
+if [[ $? != 0 ]]; then
+    echo "Sie haben ein falsches Passwort eingegeben, das Script wird abgebrochen."
+    exit 1
+fi
+
+# join domain
 net join -k
 
 # remove old sss-cache
@@ -137,13 +162,13 @@ pdc=`echo "${pdc%?}"`
 
 # memberserver or desktop-client?
 membertype="nix"
-until [[ $membertype == "pc" || $membertype == "ms" ]]; do
-    read -p "Ist dies ein Memberserver oder ein Arbeitsplatz-Computer? [ms|pc]: " membertype
+until [[ $membertype == "pc" || $membertype == "ms" || $membertype == "nb" ]]; do
+    read -p "Ist dies ein Memberserver, ein Arbeitsplatz-Computer oder ein Notebook? [ms|pc|nb]: " membertype
     membertype=`tolower $membertype`
 done
 
 if [[ $membertype == "pc" ]]; then
-    # Mount Verzeichnis anlegen
+    # create mount dir
     mkdir /mnt/invis
 
     echo "$pdc:/home /home nfs4 defaults 0 0" >> /etc/fstab
@@ -151,4 +176,11 @@ if [[ $membertype == "pc" ]]; then
 
     # Alles mounten, was nicht gemountet ist.
     mount -a
+
+elif [[ $membertype == "nb" ]]; then
+    # create mount dir
+    mkdir /mnt/invis
+    # install openvpn
+    zypper -n in -n openvpn
+
 fi

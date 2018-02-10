@@ -5,7 +5,7 @@ to an ActiveDirectory on an invis-Server.
 
 The scripts:
 
-1. clientsetup - Joins the AD Domain and mounts the invis-servers fileserver 
+1. joininvis - Joins the AD Domain and mounts the invis-servers fileserver 
    shares via NFS on the client computer. This script is needet only one time.
    
 2. delssscache - Removes an existing sssd-cache completely. This script is 
