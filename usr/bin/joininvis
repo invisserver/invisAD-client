@@ -169,7 +169,7 @@ done
 
 if [[ $membertype == "pc" ]]; then
     # create mount dir
-    mkdir /mnt/invis
+    mkdir -p /mnt/invis/shares
 
     echo "$pdc:/home /home nfs4 defaults 0 0" >> /etc/fstab
     echo "$pdc:/shares /mnt/invis/shares nfs4 defaults 0 0" >> /etc/fstab
