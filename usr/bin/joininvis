@@ -127,6 +127,12 @@ changevalues $path $modfile "$changestrings"
 chown root.root "$path/$modfile"
 chmod 0600 "$path/$modfile"
 
+# prepare idmapping
+path="/etc"
+modfile="idmapd.conf"
+changestrings="localdomain%$dnsdomain"
+changevalues $path $modfile "$changestrings"
+
 # prepare domain join
 # Bugfix, das folgende Verzeichnis fehlt
 if [[ ! -d "/run/user/0/krb5cc" ]]; then
@@ -144,6 +150,10 @@ if [[ $? != 0 ]]; then
     exit 1
 fi
 
+# activate gssapi for nfs
+sysconf_addword -r /etc/sysconfig/nfs NFS_SECURITY_GSS no
+sysconf_addword /etc/sysconfig/nfs NFS_SECURITY_GSS yes
+
 # join domain
 net join -k
 
@@ -152,6 +162,10 @@ delssscache
 
 # SSSD in Autostart integrieren.
 systemctl enable sssd.service
+
+# NFS Daemon starten
+systemctl enable nfs.service
+systemctl start nfs.service
 
 # PAM Konfigurieren -> SSSD Modul aktivieren
 pam-config --add --sss
