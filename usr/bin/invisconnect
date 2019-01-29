@@ -54,7 +54,7 @@ usage() {
 case "$1" in
     "c")
 	    # OpenVPN Verbindung aufbauen
-	    sudo /usr/sbin/openvpn --config $ovpnconf --daemon -log ovpnsession.log
+	    sudo /usr/sbin/openvpn --config $ovpnconf --daemon --log ovpnsession.log
 	    # invis Server Freigaben einhaengen
 	    echo "$delay Sekunden Wartezeit, bevor das Script fortgesetzt wird."
 	    sleep $delay
