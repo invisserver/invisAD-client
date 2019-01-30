@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script zur Integration eines openSUSE Clients in eine invis-Server Active-
 # Directory Domaene
-# (c) 2015-2017 Stefan Schaefer -- invis-server.org
+# (c) 2015-2019 Stefan Schaefer -- invis-server.org
 # License GPLv3
 # Questions: info@invis-server.org
 
@@ -151,8 +151,8 @@ if [[ $? != 0 ]]; then
 fi
 
 # activate gssapi for nfs
-sysconf_addword -r /etc/sysconfig/nfs NFS_SECURITY_GSS no
-sysconf_addword /etc/sysconfig/nfs NFS_SECURITY_GSS yes
+#sysconf_addword -r /etc/sysconfig/nfs NFS_SECURITY_GSS no
+#sysconf_addword /etc/sysconfig/nfs NFS_SECURITY_GSS yes
 
 # join domain
 net join -k
@@ -196,5 +196,4 @@ elif [[ $membertype == "nb" ]]; then
     mkdir /mnt/invis
     # install openvpn
     zypper -n in -n openvpn
-
 fi

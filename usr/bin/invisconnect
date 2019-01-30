@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script to establish a remote vpn connection to an invis-server
-# (c) 2015-2018 Stefan Schaefer -- invis-server.org
+# (c) 2015-2019 Stefan Schaefer -- invis-server.org
 # License GPLv3
 # Questions: info@invis-server.org
 
@@ -41,9 +41,7 @@ ovpnconf=`getconfdata $conffile "ovpnConf" "2"`
 mntpathbase=`getconfdata $conffile "mntPathBase" "2"`
 domain=`getconfdata $conffile "domain" "2"`
 invisip=`getconfdata $conffile "invisIP" "2"`
-
-# Waittime to establish the openvpn connection
-delay=20
+delay=`getconfdata $conffile "delay" "2"`
 
 usage() {
     echo -e "Geben Sie an, ob Sie die Verbindung zum Server aufbauen oder trennen möchten."
