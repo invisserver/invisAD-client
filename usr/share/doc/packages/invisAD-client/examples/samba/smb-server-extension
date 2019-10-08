@@ -1,0 +1,33 @@
+
+	# NTLMv1 Authentifikation verbieten
+        ntlm auth = no
+
+	# Windbind Grundkonfiguration
+        winbind trusted domains only = no
+        winbind use default domain = yes
+        winbind enum users = yes
+        winbind enum groups = yes
+        
+        # ID-Mapping mit RFC2307 Erweiterung
+        # Builtin und lokale Benutzer/Gruppen
+        idmap config *:backend = tdb
+        idmap config *:range = 40000-49999
+        
+        # LOCALDOMAIN
+        idmap config LOCALDOMAIN:backend = ad
+        idmap config LOCALDOMAIN:schema_mode = rfc2307
+        idmap config LOCALDOMAIN:range = 500-30000
+        
+        # Login-Shell und Home-Dir aus AD an NSS
+        # NSS nutzt allerdings sssd-ad!
+        winbind nss info = rfc2307
+
+        # Samba soll nur auf internen Netzwerkschnittstellen lauschen
+        interfaces = eth0 127.0.0.1
+        bind interfaces only = yes
+
+	# Logging
+	log level = 3
+
+	# Freigabenkonfiguration einbinden
+	;include /etc/samba/smb.shares.conf

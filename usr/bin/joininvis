@@ -181,19 +181,30 @@ until [[ $membertype == "pc" || $membertype == "ms" || $membertype == "nb" ]]; d
     membertype=`tolower $membertype`
 done
 
-if [[ $membertype == "pc" ]]; then
-    # create mount dir
-    mkdir -p /mnt/invis/shares
+# Typenabhaengige Konfiguration
+case "$membertype" in
 
-    echo "$pdc:/home /home nfs4 defaults 0 0" >> /etc/fstab
-    echo "$pdc:/shares /mnt/invis/shares nfs4 defaults 0 0" >> /etc/fstab
+    pc)	# create mount dir
+	mkdir -p /mnt/invis/shares
 
-    # Alles mounten, was nicht gemountet ist.
-    mount -a
+	echo "$pdc:/home /home nfs4 defaults 0 0" >> /etc/fstab
+	echo "$pdc:/shares /mnt/invis/shares nfs4 defaults 0 0" >> /etc/fstab
 
-elif [[ $membertype == "nb" ]]; then
-    # create mount dir
-    mkdir /mnt/invis
-    # install openvpn
-    zypper -n in -n openvpn
-fi
+	# Alles mounten, was nicht gemountet ist.
+	mount -a
+	;;
+    nb)
+	# create mount dir
+	mkdir /mnt/invis
+	# install openvpn
+	zypper -n in -n openvpn
+	;;
+    ms)
+	cat $exampledir/samba/smb-server-extension >> /etc/samba/smb.conf
+	path="/etc/samba"
+	modfile="smb.conf"
+
+	changestrings="LOCALDOMAIN%$netbiosdomain"
+	changevalues $path $modfile "$changestrings"
+	;;
+esac
