@@ -201,6 +201,7 @@ case "$membertype" in
 	;;
     ms)
 	cat $exampledir/samba/smb-server-extension >> /etc/samba/smb.conf
+	zypper -n in -ny samba-winbind
 	path="/etc/samba"
 	modfile="smb.conf"
 
