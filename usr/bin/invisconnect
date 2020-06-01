@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script to establish a remote vpn connection to an invis-server
-# (c) 2015-2019 Stefan Schaefer -- invis-server.org
+# (c) 2015-2020 Stefan Schaefer -- invis-server.org
 # License GPLv3
 # Questions: info@invis-server.org
 
@@ -38,6 +38,7 @@ getconfdata() {
 
 # get data from configuration
 ovpnconf=`getconfdata $conffile "ovpnConf" "2"`
+ovpnmethod=`getconfdata $conffile "ovpnViaNM" "2"`
 mntpathbase=`getconfdata $conffile "mntPathBase" "2"`
 domain=`getconfdata $conffile "domain" "2"`
 invisip=`getconfdata $conffile "invisIP" "2"`
@@ -51,6 +52,8 @@ usage() {
 
 case "$1" in
     "c")
+	# VPN via Networkmanager?
+	if [[ $ovpnmethod == 0 ]]; then
 	    # OpenVPN Verbindung aufbauen
 	    sudo /usr/sbin/openvpn --config $ovpnconf --daemon --log ovpnsession.log
 	    # invis Server Freigaben einhaengen
@@ -63,26 +66,30 @@ case "$1" in
 	    sudo echo -e "search $domain" > /tmp/resolv.conf
 	    sudo echo -e "nameserver $invisip" >> /tmp/resolv.conf
 	    sudo mv /tmp/resolv.conf /etc/resolv.conf
-	    # Testen, ob Zielverzeichnisse vorhanden, wenn nicht anlegen.
-	    if [[ ! -d $mntpathbase ]]; then
-		sudo mkdir -p $mntpathbase/shares
-		sudo mkdir -p $mntpathbase/home
-	    fi
-	    # Freigaben einhaengen
-	    sudo mount -t nfs $invisip:/srv/nfs4_base/shares $mntpathbase/shares
-	    sudo mount -t nfs $invisip:/srv/nfs4_base/home $mntpathbase/home
-	    ;;
-	"d")
-	    # Freigaben aushaengen
-	    sudo umount $mntpathbase/shares
-	    sudo umount $mntpathbase/home
+	fi
+	# Testen, ob Zielverzeichnisse vorhanden, wenn nicht anlegen.
+	if [[ ! -d $mntpathbase ]]; then
+	    sudo mkdir -p $mntpathbase/shares
+	    sudo mkdir -p $mntpathbase/home
+	fi
+	# Freigaben einhaengen
+	sudo mount -t nfs $invisip:/srv/nfs4_base/shares $mntpathbase/shares
+	sudo mount -t nfs $invisip:/srv/nfs4_base/home $mntpathbase/home
+	;;
+    "d")
+	# Freigaben aushaengen
+	sudo umount $mntpathbase/shares
+	sudo umount $mntpathbase/home
+	# VPN via Networkmanager?
+	if [[ $ovpnmethod == 0 ]]; then
 	    # OpenVPN beenden
 	    openvpnpid=$(pgrep openvpn)
 	    sudo kill $openvpnpid
 	    # Urspruengliche resolv.conf wiederherstellen
 	    sudo mv /etc/resolv.conf.ori /etc/resolv.conf
-	    ;;
-	*)
-	    usage
-	    ;;
+	fi
+	;;
+    *)
+	usage
+	;;
 esac
