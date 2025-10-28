@@ -88,17 +88,25 @@ sv=`echo $suseversion | tr -d "."`
 
 # Dateien sichern und kopieren
 mv /etc/samba/smb.conf /etc/samba/smb.conf.setupsafe
+
+# sssd vorbereiten
+sssconfdir="/etc/sssd"
 if [[ -f /etc/sssd/sssd.conf ]]; then
     old /etc/sssd/sssd.conf
 fi
+if [[ ! -d $sssconfdir ]]; then
+	mkdir $sssconfdir
+fi
+
+# alte Kerberos Dateien sichern
 old /etc/krb5.conf
 old /etc/nsswitch.conf
 
 # Neue Konfigurationsdateien kopieren und anpassen
 cp $exampledir/etc/krb5.conf /etc
 cp $exampledir/etc/nsswitch.conf /etc
-cp $exampledir/sssd/sssd.conf /etc/sssd
-cp $exampledir/samba/smb.conf /etc/samba
+cp $exampledir/sssd/sssd.conf $sssconfdir/
+cp $exampledir/samba/smb.conf /etc/samba/
 
 # Samba
 path="/etc/samba"
